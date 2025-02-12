@@ -3,13 +3,13 @@ package com.mc3699.surge.base;
 public class ElectricalLogic implements IElectricalLogic {
 
     private float voltage, maxVoltage;
-    private float current, maxCurrent;
+    private float amperage, maxAmperage;
     private float resistance;
 
-    public ElectricalLogic(float maxVoltage, float maxCurrent, float resistance)
+    public ElectricalLogic(float maxVoltage, float maxAmperage, float resistance)
     {
         this.maxVoltage = maxVoltage;
-        this.maxCurrent = maxCurrent;
+        this.maxAmperage = maxAmperage;
         this.resistance = resistance;
     }
 
@@ -20,9 +20,7 @@ public class ElectricalLogic implements IElectricalLogic {
     }
 
     @Override
-    public float getCurrent() {
-        return current;
-    }
+    public float getAmperage() { return amperage; }
 
     @Override
     public float getResistance() {
@@ -31,12 +29,12 @@ public class ElectricalLogic implements IElectricalLogic {
 
     @Override
     public void setVoltage(float voltage) {
-        this.voltage = voltage;
+        this.voltage = Math.min(voltage, maxVoltage);
     }
 
     @Override
-    public void setCurrent(float current) {
-        this.current = Math.min(current, maxCurrent);
+    public void setAmperage(float amperage) {
+        this.amperage = Math.min(amperage, maxAmperage);
     }
 
     @Override

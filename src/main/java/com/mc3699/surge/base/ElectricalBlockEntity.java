@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.EnumMap;
 import java.util.Map;
 
+// class for all electrical parts BUT wires
 public class ElectricalBlockEntity extends BlockEntity {
     public ElectricalBlockEntity(BlockEntityType<?> pType, BlockPos pPos, BlockState pBlockState) {
         super(pType, pPos, pBlockState);
@@ -20,10 +21,7 @@ public class ElectricalBlockEntity extends BlockEntity {
     }
 
     private final Map<Direction, ElectricalPolarity> polaritySides = new EnumMap<>(Direction.class);
-
-    private float voltage = 0;
-    private float amperage = 0;
-    private float resistance = 0;
+    public final ElectricalLogic electricalLogic = new ElectricalLogic(120, 40, 8);
 
 
     private void initializePolarity()
@@ -47,7 +45,13 @@ public class ElectricalBlockEntity extends BlockEntity {
         return polaritySides.getOrDefault(direction, ElectricalPolarity.NEUTRAL);
     }
 
-
+    public boolean isCompletelyNeutral() {
+        for (Direction dir : Direction.values())
+        {
+            if (polaritySides.get(dir) != ElectricalPolarity.NEUTRAL) return false;
+        }
+        return true;
+    }
 
     @Override
     protected void saveAdditional(CompoundTag pTag) {
@@ -56,16 +60,19 @@ public class ElectricalBlockEntity extends BlockEntity {
         CompoundTag polarityTag = new CompoundTag();
         for (Direction direction : Direction.values())
         {
-            polarityTag.putString(direction.getName(), polaritySides.getOrDefault(direction, ElectricalPolarity.NEUTRAL).name());
+            polarityTag.putString(direction.getName(), polaritySides.getOrDefault(
+                    direction,
+                    ElectricalPolarity.NEUTRAL
+            ).name());
         }
 
         pTag.put("polarity", polarityTag);
 
         // V/A/R
 
-        pTag.putFloat("voltage", voltage);
-        pTag.putFloat("amperage", amperage);
-        pTag.putFloat("resistance",resistance);
+        pTag.putFloat("voltage", electricalLogic.getVoltage());
+        pTag.putFloat("amperage", electricalLogic.getAmperage());
+        pTag.putFloat("resistance", electricalLogic.getResistance());
 
     }
 
@@ -82,44 +89,26 @@ public class ElectricalBlockEntity extends BlockEntity {
         }
 
         if(pTag.contains("voltage")) {
-            voltage = pTag.getFloat("voltage");
+            electricalLogic.setVoltage(pTag.getFloat("voltage"));
         }
 
         if(pTag.contains("amperage")) {
-            amperage = pTag.getFloat("amperage");
+            electricalLogic.setAmperage(pTag.getFloat("amperage"));
         }
 
         if(pTag.contains("resistance")) {
-            resistance = pTag.getFloat("resistance");
+            electricalLogic.setResistance(pTag.getFloat("resistance"));
         }
 
     }
 
-
-    public void setVoltage(float voltage) {
-        this.voltage = voltage;
-        setChanged();
-    }
-
-    public void setResistance(float resistance) {
-        this.resistance = resistance;
-        setChanged();
-    }
-
-    public void setAmperage(float amperage) {
-        this.amperage = amperage;
-        setChanged();
-    }
-
-    public float getVoltage() {
-        return voltage;
-    }
-
-    public float getResistance() {
-        return resistance;
-    }
-
-    public float getAmperage() {
-        return amperage;
+    public static ElectricalPolarity oppositeof(ElectricalPolarity polarity) {
+        if (polarity == ElectricalPolarity.POSITIVE) {
+            return ElectricalPolarity.NEGATIVE;
+        } else if (polarity == ElectricalPolarity.NEGATIVE) {
+            return ElectricalPolarity.POSITIVE;
+        } else {
+            return ElectricalPolarity.NEUTRAL;
+        }
     }
 }

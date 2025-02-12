@@ -41,7 +41,7 @@ public class BasicWireBlock extends Block implements EntityBlock {
             if(entity instanceof BasicWireBlockEntity wireBlockEntity)
             {
                 wireBlockEntity.electricalLogic.setVoltage(wireBlockEntity.electricalLogic.getVoltage() + 100);
-                wireBlockEntity.electricalLogic.setCurrent(wireBlockEntity.electricalLogic.getCurrent() + 10);
+                wireBlockEntity.electricalLogic.setAmperage(wireBlockEntity.electricalLogic.getAmperage() + 10);
             }
 
             return InteractionResult.SUCCESS;

@@ -2,10 +2,7 @@ package com.mc3699.surge.transfer.basicWire;
 
 import com.mc3699.surge.ModBlockEntities;
 import com.mc3699.surge.Surge;
-import com.mc3699.surge.base.ElectricalCapability;
-import com.mc3699.surge.base.ElectricalLogic;
-import com.mc3699.surge.base.IElectricalLogic;
-import com.mc3699.surge.base.ModCapabilities;
+import com.mc3699.surge.base.*;
 import com.mc3699.surge.world.util.TickableBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -23,9 +20,12 @@ import net.minecraftforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.NotNull;
 import oshi.util.platform.unix.solaris.KstatUtil;
 
-public class BasicWireBlockEntity extends BlockEntity implements TickableBlockEntity {
+import java.util.EnumMap;
+import java.util.Map;
 
-    final ElectricalLogic electricalLogic = new ElectricalLogic(120, 40, 8);
+// class for every type of wire
+public class BasicWireBlockEntity extends ElectricalBlockEntity implements TickableBlockEntity {
+
     private final LazyOptional<IElectricalLogic> electricalOptional = LazyOptional.of(() -> electricalLogic);
 
     public BasicWireBlockEntity(BlockPos pPos, BlockState pBlockState) {
@@ -36,7 +36,7 @@ public class BasicWireBlockEntity extends BlockEntity implements TickableBlockEn
     protected void saveAdditional(CompoundTag pTag) {
         super.saveAdditional(pTag);
         pTag.putFloat("voltage", electricalLogic.getVoltage());
-        pTag.putFloat("current", electricalLogic.getCurrent());
+        pTag.putFloat("amperage", electricalLogic.getAmperage());
         pTag.putFloat("resistance", electricalLogic.getResistance());
     }
 
@@ -52,36 +52,44 @@ public class BasicWireBlockEntity extends BlockEntity implements TickableBlockEn
             {
                 IElectricalLogic targetLogic = targetWire.electricalLogic;
 
+                // sharing polarities
+                if (!targetWire.isCompletelyNeutral() && !this.isCompletelyNeutral())
+                { // share this wires polarity with the next
+                    // FIXME: this should not work like this
+                    this.setPolarity(dir, ElectricalPolarity.POSITIVE);
+                    targetWire.setPolarity(dir.getOpposite(), ElectricalPolarity.NEGATIVE);
+                }
+
+                // electrical math bs
+                // TODO: make polarity matter
                 float localVoltage = electricalLogic.getVoltage();
-                float localCurrent = electricalLogic.getCurrent();
+                float localCurrent = electricalLogic.getAmperage();
                 float localResistance = electricalLogic.getResistance();
 
                 float targetVoltage = targetLogic.getVoltage();
-                float targetCurrent = targetLogic.getCurrent();
+                float targetCurrent = targetLogic.getAmperage();
                 float targetResistance = targetLogic.getResistance();
 
                 float totalResist = localResistance + targetResistance;
 
                 if(totalResist == 0) continue;
-
                 float totalCurrent = (localVoltage - targetVoltage) / totalResist;
 
-                float currentActual = Math.min(electricalLogic.getCurrent(), Math.abs(totalCurrent));
-
+                float currentActual = Math.min(electricalLogic.getAmperage(), Math.abs(totalCurrent));
                 float voltageAdjust = (currentActual * totalResist);
 
                 if(localVoltage > targetVoltage)
                 {
-                    targetLogic.setCurrent(targetLogic.getCurrent() + currentActual);
+                    targetLogic.setAmperage(targetLogic.getAmperage() + currentActual);
                     targetLogic.setVoltage(targetVoltage + voltageAdjust);
 
-                    electricalLogic.setCurrent(electricalLogic.getCurrent() - currentActual);
+                    electricalLogic.setAmperage(electricalLogic.getAmperage() - currentActual);
                     electricalLogic.setVoltage(electricalLogic.getVoltage() - voltageAdjust);
                 } else {
-                    targetLogic.setCurrent(targetLogic.getCurrent() - currentActual);
+                    targetLogic.setAmperage(targetLogic.getAmperage() - currentActual);
                     targetLogic.setVoltage(targetVoltage - voltageAdjust);
 
-                    electricalLogic.setCurrent(electricalLogic.getCurrent() + currentActual);
+                    electricalLogic.setAmperage(electricalLogic.getAmperage() + currentActual);
                     electricalLogic.setVoltage(electricalLogic.getVoltage() + voltageAdjust);
                 }
 
@@ -91,7 +99,16 @@ public class BasicWireBlockEntity extends BlockEntity implements TickableBlockEn
                 } else {
                     level.setBlock(worldPosition.above(), Blocks.AIR.defaultBlockState(), 3);
                 }
-
+            }
+            else if (neighbor instanceof ElectricalBlockEntity sourceOfElec)
+            { // ElectricalBlockEntity should always be a source of electricity
+                ElectricalPolarity sourcePolarity = sourceOfElec.getPolarity(dir.getOpposite());
+                if (sourcePolarity == ElectricalPolarity.NEGATIVE)
+                {
+                    this.setPolarity(dir, ElectricalPolarity.POSITIVE);
+                } else if (sourcePolarity == ElectricalPolarity.POSITIVE) {
+                    this.setPolarity(dir, ElectricalPolarity.NEGATIVE);
+                }
             }
         }
 

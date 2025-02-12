@@ -3,11 +3,11 @@ package com.mc3699.surge.base;
 public interface IElectricalLogic {
 
     float getVoltage();
-    float getCurrent();
+    float getAmperage();
     float getResistance();
 
     void setVoltage(float voltage);
-    void setCurrent(float current);
+    void setAmperage(float amperage);
     void setResistance(float resistance);
 
 }

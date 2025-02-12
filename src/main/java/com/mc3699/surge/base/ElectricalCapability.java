@@ -13,9 +13,9 @@ public class ElectricalCapability implements ICapabilityProvider {
 
     private final ElectricalLogic electricalLogic;
 
-    public ElectricalCapability(int maxVoltage, int maxCurrent, int resistance)
+    public ElectricalCapability(int maxVoltage, int maxAmperage, int resistance)
     {
-        this.electricalLogic = new ElectricalLogic(maxVoltage, maxCurrent, resistance);
+        this.electricalLogic = new ElectricalLogic(maxVoltage, maxAmperage, resistance);
     }
 
     @Override
