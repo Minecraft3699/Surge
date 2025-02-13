@@ -45,23 +45,25 @@ public class BasicWireBlockEntity extends ElectricalBlockEntity implements Ticka
 
         if(level.isClientSide()) return;
 
+        boolean foundAWire = false;
+        // this entire thing prolly needs a rewrite :sob:
         for(Direction dir : Direction.values())
         {
             BlockEntity neighbor = level.getBlockEntity(worldPosition.relative(dir));
             if(neighbor instanceof BasicWireBlockEntity targetWire)
             {
+                foundAWire = true;
                 IElectricalLogic targetLogic = targetWire.electricalLogic;
 
                 // sharing polarities
-                if (!targetWire.isCompletelyNeutral() && !this.isCompletelyNeutral())
+                if (targetWire.isCompletelyNeutral() && !this.isCompletelyNeutral())
                 { // share this wires polarity with the next
-                    // FIXME: this should not work like this
                     this.setPolarity(dir, ElectricalPolarity.POSITIVE);
                     targetWire.setPolarity(dir.getOpposite(), ElectricalPolarity.NEGATIVE);
                 }
 
+                if (this.getPolarity(dir) != ElectricalPolarity.NEGATIVE) { continue; }
                 // electrical math bs
-                // TODO: make polarity matter
                 float localVoltage = electricalLogic.getVoltage();
                 float localCurrent = electricalLogic.getAmperage();
                 float localResistance = electricalLogic.getResistance();
@@ -103,15 +105,17 @@ public class BasicWireBlockEntity extends ElectricalBlockEntity implements Ticka
             else if (neighbor instanceof ElectricalBlockEntity sourceOfElec)
             { // ElectricalBlockEntity should always be a source of electricity
                 ElectricalPolarity sourcePolarity = sourceOfElec.getPolarity(dir.getOpposite());
-                if (sourcePolarity == ElectricalPolarity.NEGATIVE)
-                {
-                    this.setPolarity(dir, ElectricalPolarity.POSITIVE);
-                } else if (sourcePolarity == ElectricalPolarity.POSITIVE) {
+                if (sourcePolarity == ElectricalPolarity.POSITIVE) {
                     this.setPolarity(dir, ElectricalPolarity.NEGATIVE);
                 }
             }
         }
 
+        if (!foundAWire) {
+            for (Direction dir : Direction.values()) {
+                this.setPolarity(dir, ElectricalPolarity.NEUTRAL);
+            }
+        }
     }
 
     @Override
