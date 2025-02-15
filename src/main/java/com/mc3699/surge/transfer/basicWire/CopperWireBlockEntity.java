@@ -1,45 +1,38 @@
 package com.mc3699.surge.transfer.basicWire;
 
 import com.mc3699.surge.ModBlockEntities;
-import com.mc3699.surge.Surge;
 import com.mc3699.surge.base.*;
-import com.mc3699.surge.world.util.TickableBlockEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.TickingBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.energy.IEnergyStorage;
-import org.jetbrains.annotations.NotNull;
-import oshi.util.platform.unix.solaris.KstatUtil;
 
-import java.util.EnumMap;
-import java.util.Map;
+public class CopperWireBlockEntity extends BlockEntity implements CircuitPart, ElectricalConductor {
+    private float temperature = 20;
 
-// class for every type of wire
-public class BasicWireBlockEntity extends ElectricalBlockEntity implements TickableBlockEntity {
-
-    private final LazyOptional<IElectricalLogic> electricalOptional = LazyOptional.of(() -> electricalLogic);
-
-    public BasicWireBlockEntity(BlockPos pPos, BlockState pBlockState) {
+    public CopperWireBlockEntity(BlockPos pPos, BlockState pBlockState) {
         super(ModBlockEntities.BASIC_WIRE_BLOCK_ENTITY.get(), pPos, pBlockState);
     }
 
     @Override
-    protected void saveAdditional(CompoundTag pTag) {
-        super.saveAdditional(pTag);
-        pTag.putFloat("voltage", electricalLogic.getVoltage());
-        pTag.putFloat("amperage", electricalLogic.getAmperage());
-        pTag.putFloat("resistance", electricalLogic.getResistance());
+    public void setTemperature(float temperature) {
+        this.temperature = temperature;
+    }
+    @Override
+    public float getTemperature() {
+        return temperature;
     }
 
+    @Override
+    public double getResistance() {
+        return 0.0000002688 * (1 + 0.00386 * (temperature - 20));
+    }
+
+    @Override
+    public int getMaxAmperage() {
+        return 375000;
+    }
+
+    /*
     @Override
     public void tick() {
 
@@ -53,7 +46,7 @@ public class BasicWireBlockEntity extends ElectricalBlockEntity implements Ticka
             if(neighbor instanceof BasicWireBlockEntity targetWire)
             {
                 foundAWire = true;
-                IElectricalLogic targetLogic = targetWire.electricalLogic;
+                ElectricalLogic targetLogic = targetWire.electricalLogic;
 
                 // sharing polarities
                 if (targetWire.isCompletelyNeutral() && !this.isCompletelyNeutral())
@@ -117,20 +110,5 @@ public class BasicWireBlockEntity extends ElectricalBlockEntity implements Ticka
             }
         }
     }
-
-    @Override
-    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap) {
-        if(cap == ModCapabilities.ELECTRICAL_CAPABILITY)
-        {
-            return electricalOptional.cast();
-        } else {
-            return LazyOptional.empty();
-        }
-    }
-
-    @Override
-    public void invalidateCaps() {
-        super.invalidateCaps();
-        electricalOptional.invalidate();
-    }
+     */
 }

@@ -33,10 +33,8 @@ import org.slf4j.Logger;
 @Mod(Surge.MODID)
 public class Surge {
 
-    // Define mod id in a common place for everything to reference
     public static final String MODID = "surge";
-    // Directly reference a slf4j logger
-    private static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = LogUtils.getLogger();
 
     public Surge() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();

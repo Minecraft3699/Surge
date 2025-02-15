@@ -1,9 +1,7 @@
 package com.mc3699.surge;
 
-import com.mc3699.surge.base.ElectricalPolarity;
 import com.mc3699.surge.generation.creativeGenerator.CreativeGeneratorBlock;
-import com.mc3699.surge.generation.creativeGenerator.CreativeGeneratorBlockEntity;
-import com.mc3699.surge.transfer.basicWire.BasicWireBlock;
+import com.mc3699.surge.transfer.basicWire.CopperWireBlock;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -23,9 +21,7 @@ public class ModBlocks {
             registerBlock("creative_generator", CreativeGeneratorBlock::new);
 
     public static final RegistryObject<Block> BASIC_WIRE_BLOCK =
-            registerBlock("wire", BasicWireBlock::new);
-
-
+            registerBlock("wire", CopperWireBlock::new);
 
 
     public static void register(IEventBus eventBus)
