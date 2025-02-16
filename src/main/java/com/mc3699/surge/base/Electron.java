@@ -18,13 +18,20 @@ public class Electron {
     }
 
     private static class CircuitTreeNode {
-        public final BlockPos position;         // Position of this CircuitPart
-        public final CircuitPart part;          // The CircuitPart at this node
+        public final BlockPos position;
+        public final CircuitPart part;
         public final Map<BlockPos, CircuitTreeNode> children = new HashMap<>();
+
+        // electrical properties
+        public double resistance;           // resistance of this component (Ω)
+        public double equivalentResistance; // resistance of this node and  its subtree (Ω)
+        public float amperage;              // current flowing through this component (A)
+        public float voltageDrop;          // voltage drop across this component (V)
 
         public CircuitTreeNode(BlockPos position, CircuitPart part) {
             this.position = position;
             this.part = part;
+            this.resistance = part.getResistance(); // Assume getResistance() exists
         }
     }
     private static CircuitTreeNode buildCircuitTree(ElectronReturn result) {
@@ -60,6 +67,25 @@ public class Electron {
         }
 
         return root;
+    }
+    private static double computeEquivalentResistance(CircuitTreeNode node) {
+        if (node == null) return 0f;
+
+        // leaf node: resistance is just this component
+        if (node.children.isEmpty()) {
+            node.equivalentResistance = node.resistance;
+            return node.equivalentResistance;
+        }
+
+        // parallel branches: compute reciprocal sum
+        double parallelResistance = 0;
+        for (CircuitTreeNode child : node.children.values()) {
+            parallelResistance += 1 / computeEquivalentResistance(child);
+        }
+
+        // total resistance = current node (series) + parallel branches
+        node.equivalentResistance = node.resistance + (1 / parallelResistance);
+        return node.equivalentResistance;
     }
 
     public static class ElectronReturn {
@@ -150,6 +176,8 @@ public class Electron {
         initialParts.add((CircuitPart) level.getBlockEntity(origin));
         queue.add(new PathState(startPos, origin, initialParts, initialVisited));
 
+        boolean isFirstSource = false;
+
         while (!queue.isEmpty()) {
             PathState state = queue.poll();
 
@@ -171,8 +199,17 @@ public class Electron {
                 BlockEntity be = level.getBlockEntity(nextPos);
                 if (be instanceof CircuitPart part) {
                     if (part instanceof ElectricalSourceBlockEntity source) {
+                        if (!isFirstSource) {
+                            // this ensures that there will be only one electron along a circuit
+                            return null;
+                        }
+
+                        // check if the polarity is correct
                         Direction sourceDir = dir.getOpposite();
-                        if (source.getPolarity(sourceDir) == ElectricalPolarity.NEUTRAL) continue;
+                        // TODO: if this is positive the voltage should be subtracted instead of added
+                        if (source.getPolarity(sourceDir) != ElectricalPolarity.NEGATIVE) continue;
+                    } else {
+                        isFirstSource = true;
                     }
 
                     // clone state for the new path

@@ -5,22 +5,29 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.EnumMap;
 
-// 🥕
-public class ElectricalSourceBlockEntity extends PolarityEnabledBlockEntity implements CircuitPart {
-    public double outputVoltage; // output voltage
+public class PolarityEnabledBlockEntity extends BlockEntity {
+    public double resistance; // only used when an electron is passing through it
+    protected EnumMap<Direction, ElectricalPolarity> polaritySides;
 
-    private static final String outputVoltageTagName = "voltage";
+    protected static final String polaritySidesTagName = "polarity";
+    protected static final String resistanceTagName = "resistance";
 
-    public ElectricalSourceBlockEntity (BlockEntityType<?> pType, BlockPos pPos, BlockState pBlockState) {
+    public PolarityEnabledBlockEntity(BlockEntityType<?> pType, BlockPos pPos, BlockState pBlockState) {
         super(pType, pPos, pBlockState);
     }
 
-    // saving and tags
+    public ElectricalPolarity getPolarity(Direction direction) {
+        return polaritySides.getOrDefault(direction, ElectricalPolarity.NEUTRAL);
+    }
+    public void initializePolaritySides(EnumMap<Direction, ElectricalPolarity> polaritySides) {
+        this.polaritySides = polaritySides;
+    }
+
     @Override
     protected void saveAdditional(CompoundTag pTag) {
         super.saveAdditional(pTag);
@@ -32,11 +39,8 @@ public class ElectricalSourceBlockEntity extends PolarityEnabledBlockEntity impl
                     ElectricalPolarity.NEUTRAL
             ).name());
         }
-
         pTag.put(PolarityEnabledBlockEntity.polaritySidesTagName, polarityTag);
         pTag.putDouble(PolarityEnabledBlockEntity.resistanceTagName, resistance);
-
-        pTag.putDouble(ElectricalSourceBlockEntity.outputVoltageTagName, outputVoltage);
     }
 
     @Override
@@ -51,20 +55,8 @@ public class ElectricalSourceBlockEntity extends PolarityEnabledBlockEntity impl
             }
         }
 
-        if(pTag.contains(ElectricalSourceBlockEntity.outputVoltageTagName)) {
-            this.outputVoltage = pTag.getDouble(ElectricalSourceBlockEntity.outputVoltageTagName);
-        }
         if(pTag.contains(ElectricalSourceBlockEntity.resistanceTagName)) {
             this.resistance = pTag.getDouble(ElectricalSourceBlockEntity.resistanceTagName);
         }
-    }
-
-    public double getOutputVoltage() {
-        return outputVoltage;
-    }
-
-    @Override
-    public double getResistance() {
-        return resistance;
     }
 }

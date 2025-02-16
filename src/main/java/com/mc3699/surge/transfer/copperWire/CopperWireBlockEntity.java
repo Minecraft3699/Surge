@@ -1,4 +1,4 @@
-package com.mc3699.surge.transfer.basicWire;
+package com.mc3699.surge.transfer.copperWire;
 
 import com.mc3699.surge.ModBlockEntities;
 import com.mc3699.surge.base.*;
@@ -10,7 +10,7 @@ public class CopperWireBlockEntity extends BlockEntity implements CircuitPart, E
     private float temperature = 20;
 
     public CopperWireBlockEntity(BlockPos pPos, BlockState pBlockState) {
-        super(ModBlockEntities.BASIC_WIRE_BLOCK_ENTITY.get(), pPos, pBlockState);
+        super(ModBlockEntities.COPPER_WIRE_BLOCK_ENTITY.get(), pPos, pBlockState);
     }
 
     @Override

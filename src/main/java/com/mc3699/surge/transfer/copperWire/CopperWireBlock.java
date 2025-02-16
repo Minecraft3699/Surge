@@ -1,4 +1,4 @@
-package com.mc3699.surge.transfer.basicWire;
+package com.mc3699.surge.transfer.copperWire;
 
 import com.mc3699.surge.world.util.TickableBlockEntity;
 import net.minecraft.core.BlockPos;
